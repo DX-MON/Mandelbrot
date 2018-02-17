@@ -3,14 +3,6 @@
 #include "mandelbrot.hxx"
 #include "shade.hxx"
 
-using jsonAtom_t = rSON::JSONAtom;
-using jsonArray_t = rSON::JSONArray;
-using jsonFloat_t = rSON::JSONFloat;
-using rSON::parseJSON;
-using jsonParserError_t = rSON::JSONParserError;
-
-using jsonAtomPtr_t = std::unique_ptr<jsonAtom_t>;
-
 std::unique_ptr<rgb8_t []> image{nullptr};
 std::array<floatRGB_t, 16> colours
 {{
@@ -79,27 +71,16 @@ void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
 	{
 		for (uint32_t x{0}; x < subchunk.width(); ++x)
 		{
-			double point;
-			/*jsonAtomPtr_t pointsAtom;
-			try
-				{ pointsAtom.reset(parseJSON(stream)); }
-			catch (const jsonParserError_t &e)
-				{ fprintf(stderr, "%s\n", e.error()); abort(); }
-			if (!pointsAtom->typeIs(rSON::JSON_TYPE_ARRAY))
-				continue;
-			jsonArray_t &points = *pointsAtom;
-			if (points.count() != subdiv)
-				continue;*/
-
 			rgb16_t colour;
 			for (size_t i{0}; i < subdiv; ++i)
 			{
+				double point = 0.0;
 				read(stream, point);
 				if (i == 0)
-					colour = shade(point/*s[i]*/);
+					colour = shade(point);
 				else
 				{
-					colour += shade(point/*s[i]*/);
+					colour += shade(point);
 					colour /= 2;
 				}
 			}
