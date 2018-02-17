@@ -1,6 +1,9 @@
 #ifndef SOCKET__HXX
 #define SOCKET__HXX
 
+#include <memory>
+#include <stream.hxx>
+
 struct sockaddr;
 struct sockaddr_storage;
 
