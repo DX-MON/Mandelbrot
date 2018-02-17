@@ -58,7 +58,7 @@ void computeSubchunk(const area_t &size, const area_t &offset, const point2_t &s
 }
 
 void computeChunk(const area_t size, const area_t offset, const point2_t scale,
-	const point2_t center, const uint32_t subdiv, rSON::stream_t &stream) noexcept try
+	const point2_t center, const uint32_t subdiv, stream_t &stream) noexcept try
 {
 	const point2_t origin = -((area_t{width, height} / scale) / 2) + center;
 	const point2_t subpixelOrigin = -(point2_t{double(subdiv / 2), double(subdiv / 2)} / subdiv) / scale;

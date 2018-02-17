@@ -41,6 +41,6 @@ void closePNG() noexcept
 
 void writePNGRow(const uint32_t row, const uint32_t width) noexcept
 {
-	const uint8_t *const rowData = reinterpret_cast<uint8_t *>(&image[row * width]);
+	png_bytep const rowData = reinterpret_cast<png_bytep>(&image[row * width]);
 	png_write_row(png, rowData);
 }
