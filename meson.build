@@ -15,7 +15,7 @@ threading = dependency('threads')
 
 mandelbrotSrcs = [
 	'mandelbrot.cxx', 'compute.cxx',    'shade.cxx',
-	'pngWriter.cxx',  'argsParser.cxx', 'pipeStream.cxx'
+	'pngWriter.cxx',  'argsParser.cxx'
 ]
 
 mandelbrot = executable('mandelbrot',
