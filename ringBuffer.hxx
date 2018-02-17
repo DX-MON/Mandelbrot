@@ -2,12 +2,13 @@
 #define RING_BUFFER__HXX
 
 #include <stdint.h>
+#include <memory.h>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
 #include <memory>
 #include <functional>
-#include <rSON.h>
+#include <stream.hxx>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
@@ -56,7 +57,7 @@ public:
 	}
 };
 
-struct ringStream_t final : rSON::stream_t
+struct ringStream_t final : stream_t
 {
 private:
 	constexpr static uint32_t maxEntries = 4_kB;
