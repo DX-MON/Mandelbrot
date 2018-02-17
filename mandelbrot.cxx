@@ -1,15 +1,13 @@
 #include <fenv.h>
 #include <thread>
-#include <rSON_socket.h>
 #include "mandelbrot.hxx"
 #include "shade.hxx"
 #include "pngWriter.hxx"
 #include "argsParser.hxx"
-//#include "pipeStream.hxx"
+#include "socket.hxx"
 #include "ringBuffer.hxx"
 #include "conversions.hxx"
 
-using namespace rSON;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
 using std::operator ""s;
@@ -48,7 +46,7 @@ void writeImage(std::unique_lock<std::mutex> &lock) noexcept
 	}
 }
 
-int server(rpcStream_t &socket) noexcept
+int server(socketStream_t &socket) noexcept
 {
 	const area_t size{width, height};
 	std::unique_lock<std::mutex> lock(imageMutex);
@@ -75,14 +73,14 @@ int server(rpcStream_t &socket) noexcept
 	{
 		const uint32_t tile = i - 1;
 		const area_t location{tile % xTiles, tile / xTiles};
-		rpcStream_t stream = socket.accept();
+		socketStream_t stream = socket.accept();
 		if (!stream.valid())
 		{
 			puts("Failed to aquire socket for incomming connection");
 			abort();
 		}
 
-		shaderThreads[tile] = std::thread([=](rpcStream_t stream, const uint32_t affinityOffset) noexcept
+		shaderThreads[tile] = std::thread([=](socketStream_t stream, const uint32_t affinityOffset) noexcept
 			{ shadeChunk(size, subchunk, subdiv * subdiv, stream, affinityOffset); },
 			std::move(stream), i
 		);
@@ -109,7 +107,7 @@ int client(stream_t &stream) noexcept
 	{
 		puts("Compute process sleeping 1 second before starting");
 		std::this_thread::sleep_for(1s);
-		rpcStream_t &socket = reinterpret_cast<rpcStream_t &>(stream);
+		socketStream_t &socket = reinterpret_cast<socketStream_t &>(stream);
 		if (!socket.connect(nodes[0].data(), 2000))
 		{
 			puts("Failed to connect to the shader process");
@@ -213,7 +211,7 @@ int main(int argc, char **argv) noexcept
 
 	if (multiProcess)
 	{
-		rpcStream_t stream{socketType_t::ipv4};
+		socketStream_t stream{socketType_t::ipv4};
 		if (nodes[0] == self)
 			return server(stream);
 		return client(stream);
