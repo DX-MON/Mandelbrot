@@ -95,16 +95,6 @@ public:
 	}
 };
 
-/*struct rgba8_t final : public rgb8_t
-{
-private:
-	uint8_t _a;
-
-public:
-	constexpr rgba8_t() noexcept : rgb8_t(), _a(0) { }
-	constexpr rgba8_t(const rgb8_t &pixel) : rgb8_t(pixel), _a(255) { }
-};*/
-
 extern std::unique_ptr<rgb8_t []> image;
 extern std::unique_ptr<std::atomic<uint32_t> []> imageStatus;
 extern std::mutex imageMutex;
