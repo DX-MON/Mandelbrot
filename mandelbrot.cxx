@@ -11,6 +11,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
 using std::operator ""s;
+using std::operator ""us;
 #pragma GCC diagnostic pop
 
 const static arg_t args[] =
@@ -40,7 +41,7 @@ void writeImage(std::unique_lock<std::mutex> &lock) noexcept
 	for (uint32_t i{0}; i < height; ++i)
 	{
 		while (imageStatus[i] < xTiles)
-			imageSync.wait_for(lock, 1s);
+			imageSync.wait_for(lock, 10us);
 		writePNGRow(i, width);
 		fflush(stdout);
 	}
