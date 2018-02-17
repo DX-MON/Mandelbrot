@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 #include <utility>
-#include <rSON.h>
+#include <vector>
+#include <stream.hxx>
 
 struct area_t final
 {
@@ -89,7 +90,7 @@ extern uint32_t xTiles, yTiles;
 extern std::vector<uint32_t> availableProcessors;
 
 void computeChunk(const area_t size, const area_t offset, const point2_t scale,
-	const point2_t center, const uint32_t subdiv, rSON::stream_t &stream) noexcept;
+	const point2_t center, const uint32_t subdiv, stream_t &stream) noexcept;
 
 inline void threadAffinity(const uint32_t affinityOffset) noexcept
 {
@@ -99,12 +100,12 @@ inline void threadAffinity(const uint32_t affinityOffset) noexcept
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &affinity);
 }
 
-template<typename T> bool read(rSON::stream_t &stream, T &value)
+template<typename T> bool read(stream_t &stream, T &value)
 {
 	size_t len;
 	return stream.read(&value, sizeof(T), len);
 }
-template<typename T> bool write(rSON::stream_t &stream, const T &value)
+template<typename T> bool write(stream_t &stream, const T &value)
 	{ return stream.write(&value, sizeof(T)); }
 
 #endif /*MANDELBROT__HXX*/
