@@ -7,14 +7,6 @@
 #include "ringBuffer.hxx"
 #include "memory.hxx"
 
-using jsonAtom_t = rSON::JSONAtom;
-using jsonArray_t = rSON::JSONArray;
-using jsonFloat_t = rSON::JSONFloat;
-using rSON::writeJSON;
-
-template<typename T> jsonAtom_t *nodeAlloc(T node)
-	{ return new (std::nothrow) T(node); }
-
 constexpr double power(double base, uint32_t exp) noexcept
 	{ return exp == 0 ? 1 : base * power(base, exp - 1); }
 
@@ -98,14 +90,11 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 	{
 		for (uint32_t x{0}; x < size.width(); ++x)
 		{
-			//jsonArray_t points;
 			for (uint32_t i{0}; i < totalSubdivs; ++i)
 			{
 				subpixels[i].read(iteration);
-				//points.add(nodeAlloc<jsonFloat_t>(iteration));
 				write(stream, iteration);
 			}
-			//writeJSON(&points, stream);
 		}
 	}
 
