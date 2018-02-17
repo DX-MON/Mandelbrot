@@ -102,6 +102,6 @@ extern std::condition_variable imageSync;
 extern uint32_t xTiles;
 
 void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
-	rSON::stream_t &stream, const uint32_t affinityOffset) noexcept;
+	stream_t &stream, const uint32_t affinityOffset) noexcept;
 
 #endif /*SHADE__HXX*/

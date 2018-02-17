@@ -57,7 +57,7 @@ inline size_t xy(const area_t point, const area_t &size) noexcept
 }
 
 void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
-	rSON::stream_t &stream, const uint32_t affinityOffset) noexcept
+	stream_t &stream, const uint32_t affinityOffset) noexcept
 {
 	area_t offset;
 	if (!image)
