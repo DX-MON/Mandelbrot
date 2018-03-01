@@ -65,7 +65,7 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 	const point2_t subpixelOrigin = -(point2_t{double(subdiv / 2), double(subdiv / 2)} / subdiv) / scale;
 	const point2_t subpixelOffset = (point2_t{1, 1} / subdiv) / scale;
 	const uint32_t totalSubdivs = subdiv * subdiv;
-	ringSize = pageRound(size.width() * 16);
+	ringSize = pageRound(size.width() * std::min<uint32_t>(size.height(), 256) * sizeof(double));
 	auto subpixels = makeUnique<ringBuffer_t<double> []>(totalSubdivs);
 	auto subchunkThreads = makeUnique<std::thread []>(totalSubdivs);
 	if (!subpixels || !subchunkThreads)
