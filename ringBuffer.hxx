@@ -24,7 +24,7 @@ extern uint32_t ringSize;
 template<typename T> struct ringBuffer_t final
 {
 private:
-	constexpr static uint32_t maxEntries = 4_kB / sizeof(T);
+	const uint32_t maxEntries;
 	std::atomic<uint32_t> count;
 	uint32_t readIndex, writeIndex;
 	std::unique_ptr<T []> buffer;
@@ -33,13 +33,16 @@ private:
 
 	void wait(const uint32_t threshold) const noexcept
 	{
-		std::unique_lock<std::mutex> lock(bufferMutex);
-		bufferCond.wait(lock, [&]() noexcept { return count != threshold; });
+		if (count == threshold)
+		{
+			std::unique_lock<std::mutex> lock(bufferMutex);
+			bufferCond.wait(lock, [&]() noexcept { return count != threshold; });
+		}
 	}
 
 public:
-	ringBuffer_t() : count{0}, readIndex{0}, writeIndex{0}, buffer{std::make_unique<T []>(maxEntries)},
-		bufferMutex{}, bufferCond{} { }
+	ringBuffer_t() : maxEntries(ringSize / sizeof(T)), count{0}, readIndex{0}, writeIndex{0},
+		buffer{std::make_unique<T []>(maxEntries)}, bufferMutex{}, bufferCond{} { }
 
 	void read(T &value) noexcept
 	{
@@ -63,7 +66,7 @@ public:
 struct ringStream_t final : stream_t
 {
 private:
-	constexpr static uint32_t maxEntries = 4_kB;
+	constexpr static uint32_t maxEntries = 32_kB;
 	std::atomic<uint32_t> count;
 	uint32_t readIndex, writeIndex;
 	std::unique_ptr<char []> buffer;
@@ -72,9 +75,12 @@ private:
 
 	void wait(std::function<bool()> cond) const noexcept
 	{
-		std::unique_lock<std::mutex> lock(bufferMutex);
-		while (!cond())
-			bufferCond.wait_for(lock, 50us, cond);
+		if (!cond())
+		{
+			std::unique_lock<std::mutex> lock(bufferMutex);
+			while (!bufferCond.wait_for(lock, 50us, cond))
+				continue;
+		}
 	}
 
 public:
