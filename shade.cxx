@@ -88,10 +88,7 @@ void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
 		}
 		++imageStatus[y + offset.height()];
 		if (imageStatus[y + offset.height()] == xTiles)
-		{
 			std::unique_lock<std::mutex> lock(imageMutex);
-			imageSync.notify_all();
-		}
 	}
 	puts("Shader done");
 }

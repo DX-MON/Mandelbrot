@@ -43,7 +43,6 @@ void writeImage(std::unique_lock<std::mutex> &lock) noexcept
 		while (imageStatus[i] < xTiles)
 			imageSync.wait_for(lock, 10us);
 		writePNGRow(i, width);
-		fflush(stdout);
 	}
 }
 
@@ -87,7 +86,6 @@ int server(socketStream_t &socket) noexcept
 		);
 	}
 
-	fflush(stdout);
 	writeImage(lock);
 	puts("Reaping shaders");
 	for (uint32_t i{1}; i < compNodes; ++i)
