@@ -12,6 +12,7 @@ constexpr double power(double base, uint32_t exp) noexcept
 
 constexpr static const double bailout = power(power(2, 8), 2);
 static const double log_2 = log(2);
+uint32_t ringSize = 4_kB;
 
 double computePoint(const point2_t p0) noexcept
 {
@@ -64,6 +65,7 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 	const point2_t subpixelOrigin = -(point2_t{double(subdiv / 2), double(subdiv / 2)} / subdiv) / scale;
 	const point2_t subpixelOffset = (point2_t{1, 1} / subdiv) / scale;
 	const uint32_t totalSubdivs = subdiv * subdiv;
+	ringSize = pageRound(size.width() * 16);
 	auto subpixels = makeUnique<ringBuffer_t<double> []>(totalSubdivs);
 	auto subchunkThreads = makeUnique<std::thread []>(totalSubdivs);
 	if (!subpixels || !subchunkThreads)

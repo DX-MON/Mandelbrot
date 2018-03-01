@@ -17,6 +17,9 @@ using std::operator ""us;
 
 constexpr inline uint32_t operator ""_kB(const unsigned long long int value) noexcept
 	{ return value * 1024; }
+constexpr uint32_t pageRound(const uint32_t size) noexcept
+	{ return ((size / 4_kB) + (size % 4_kB ? 1 : 0)) * 4_kB; }
+extern uint32_t ringSize;
 
 template<typename T> struct ringBuffer_t final
 {
