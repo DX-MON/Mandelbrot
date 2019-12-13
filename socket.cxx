@@ -94,20 +94,20 @@ int typeToFamily(const socketType_t type) noexcept
 	return AF_UNSPEC;
 }
 
-socketStream_t::socketStream_t() noexcept : family(socketType_t::unknown), sock(), buffer(), pos(0), lastRead(0) { }
+socketStream_t::socketStream_t() noexcept : family{socketType_t::unknown}, sock{}, pos{} { }
 bool socketStream_t::valid() const noexcept { return family != socketType_t::unknown && sock != -1; }
-void socketStream_t::makeBuffer() noexcept { buffer = makeUnique<char []>(bufferLen); }
 
-socketStream_t::socketStream_t(const socketType_t type) : family(type), sock(), buffer(),
-	pos(0), lastRead(0)
+socketStream_t::socketStream_t(const socketType_t type) : family(type), sock(), pos(0)
 {
 	if (type != socketType_t::unknown && type != socketType_t::dontCare)
 		sock = socket_t(typeToFamily(family), SOCK_STREAM, IPPROTO_TCP);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 sockaddr_storage prepare(const socketType_t family, const char *const where, const uint16_t port) noexcept
 {
-	addrinfo *results = nullptr, hints = {};
+	addrinfo *results = nullptr, hints{};
 	hints.ai_family = typeToFamily(family);
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -133,6 +133,7 @@ sockaddr_storage prepare(const socketType_t family, const char *const where, con
 		return {AF_UNSPEC};
 	return service;
 }
+#pragma GCC diagnostic pop
 
 bool socketStream_t::connect(const char *const where, const uint16_t port) noexcept
 {
@@ -141,7 +142,6 @@ bool socketStream_t::connect(const char *const where, const uint16_t port) noexc
 		return false;
 	else if (family == socketType_t::dontCare)
 		sock = socket_t(service.ss_family, SOCK_STREAM, IPPROTO_TCP);
-	const_cast<socketStream_t &>(*this).makeBuffer();
 	return sock.connect(service);
 }
 
@@ -162,44 +162,37 @@ socketStream_t socketStream_t::accept() const noexcept
 	FD_SET(sock, &selectSet);
 	if (select(FD_SETSIZE, &selectSet, nullptr, nullptr, nullptr) < 1)
 		return {};
-	return {family, sock.accept(nullptr, nullptr), makeUnique<char []>(bufferLen)};
+	return {family, sock.accept(nullptr, nullptr)};
 }
 
-bool socketStream_t::read(void *const value, const size_t valueLen, size_t &actualLen)
+bool socketStream_t::read(void *const valuePtr, const size_t valueLen, size_t &actualLen)
 {
-	actualLen = 0;
-	const ssize_t result = sock.read(value, valueLen);
-	if (result > 0)
+	char *const value = static_cast<char *>(valuePtr);
+	size_t offset = 0;
+	while (offset < valueLen)
 	{
-		actualLen = size_t(result);
-		lastRead = static_cast<char *const>(value)[actualLen - 1];
-	}
-	return actualLen == valueLen;
-}
-
-bool socketStream_t::write(const void *const valuePtr, const size_t valueLen)
-{
-	if (!buffer)
-		return false;
-	auto value = static_cast<const char *const>(valuePtr);
-	size_t offs = 0, toWrite = valueLen, written = 0;
-	while (toWrite > 0)
-	{
-		const uint32_t length = (bufferLen - pos) < toWrite ? bufferLen - pos : toWrite;
-		memcpy(buffer.get() + pos, value + offs, length);
-		offs += length;
-		pos += length;
-		toWrite -= length;
-		if (pos == bufferLen)
+		const size_t amount = valueLen - offset;
+		const ssize_t result = sock.read(value + offset, amount);
+		if (result < 0)
 		{
-			const ssize_t result = sock.write(buffer.get(), bufferLen);
-			if (result < 0)
-				return false;
-			pos = 0;
-			written += size_t(result);
+			perror("Read syscall failed");
+			return false;
 		}
-		else
-			written += length;
+		offset += size_t(result);
 	}
-	return written == valueLen;
+	actualLen = valueLen;
+	return true;
+}
+
+bool socketStream_t::write(const void *const value, const size_t valueLen)
+{
+	const ssize_t result = sock.write(value, valueLen);
+	if (result < 0)
+	{
+		perror("Write syscall failed");
+		return false;
+	}
+	else if (size_t(result) != valueLen)
+		printf("Written %zu, requested %zu\n", size_t(result), valueLen);
+	return size_t(result) == valueLen;
 }

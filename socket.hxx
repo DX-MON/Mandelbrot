@@ -1,7 +1,6 @@
 #ifndef SOCKET__HXX
 #define SOCKET__HXX
 
-#include <memory>
 #include <stream.hxx>
 
 struct sockaddr;
@@ -60,18 +59,13 @@ enum class socketType_t : uint8_t
 struct socketStream_t : public stream_t
 {
 private:
-	constexpr static const uint32_t bufferLen = 1024;
 	socketType_t family;
 	socket_t sock;
-	std::unique_ptr<char []> buffer;
 	uint32_t pos;
-	char lastRead;
-
-	void makeBuffer() noexcept;
 
 protected:
-	socketStream_t(const socketType_t _family, socket_t _sock, std::unique_ptr<char []> _buffer) noexcept :
-		family(_family), sock(std::move(_sock)), buffer(std::move(_buffer)), pos(0), lastRead(0) { }
+	socketStream_t(const socketType_t _family, socket_t _sock) noexcept :
+		family{_family}, sock{std::move(_sock)}, pos{0} { }
 	socketStream_t() noexcept;
 
 public:
