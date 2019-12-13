@@ -1,7 +1,9 @@
 #ifndef STREAM__HXX
 #define STREAM__HXX
 
-#include <stddef.h>
+#include <stdlib.h>
+#include <array>
+#include <memory>
 
 struct stream_t
 {
@@ -16,12 +18,12 @@ public:
 	template<typename T> bool read(T &value)
 		{ return read(&value, sizeof(T)); }
 	template<typename T, size_t N> bool read(std::array<T, N> &value)
-		{ return read(value.data(), N); }
+		{ return read(value.data(), sizeof(T) * N); }
 
 	template<typename T> bool write(const T &value)
 		{ return write(&value, sizeof(T)); }
 	template<typename T, size_t N> bool write(const std::array<T, N> &value)
-		{ return write(value.data(), N); }
+		{ return write(value.data(), sizeof(T) * N); }
 
 	bool read(void *const value, const size_t valueLen)
 	{
