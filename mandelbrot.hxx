@@ -108,6 +108,6 @@ template<typename T> bool read(stream_t &stream, fixedVector_t<T> &value)
 template<typename T> bool write(stream_t &stream, const T &value)
 	{ return stream.write(&value, sizeof(T)); }
 template<typename T> bool write(stream_t &stream, const fixedVector_t<T> &value)
-	{ return stream.read(value.data(), sizeof(T) * value.count()); }
+	{ return stream.write(value.data(), sizeof(T) * value.count()); }
 
 #endif /*MANDELBROT__HXX*/

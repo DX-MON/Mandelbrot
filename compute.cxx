@@ -1,9 +1,11 @@
 #include <stdint.h>
+#include <memory.h>
 #include <math.h>
 #include <fenv.h>
 #include <new>
 #include <thread>
 #include "mandelbrot.hxx"
+#include "shade.hxx"
 #include "ringBuffer.hxx"
 #include "memory.hxx"
 
@@ -41,7 +43,7 @@ double computePoint(const point2_t p0) noexcept
 }
 
 void computeSubchunk(const area_t &size, const area_t &offset, const point2_t &scale,
-	const point2_t &origin, ringBuffer_t<double> &buffer) noexcept
+	const point2_t &origin, ringBuffer_t<rgb8_t> &buffer) noexcept
 {
 	puts("Subpixel worker launched");
 	const uint32_t maxY = height - 1;
@@ -52,7 +54,7 @@ void computeSubchunk(const area_t &size, const area_t &offset, const point2_t &s
 			area_t pixel = offset + area_t{x, y};
 			pixel.height(maxY - pixel.height());
 			const double iteration = computePoint((pixel / scale) + origin);
-			buffer.write(iteration);
+			buffer.write(shade(iteration));
 		}
 	}
 	puts("Subpixel worker done");
@@ -66,7 +68,7 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 	const point2_t subpixelOffset = (point2_t{1, 1} / subdiv) / scale;
 	const uint32_t totalSubdivs = subdiv * subdiv;
 	ringSize = pageRound(size.width() * std::min<uint32_t>(size.height(), 256) * sizeof(double));
-	auto subpixels = makeUnique<ringBuffer_t<double> []>(totalSubdivs);
+	auto subpixels = makeUnique<ringBuffer_t<rgb8_t> []>(totalSubdivs);
 	auto subchunkThreads = makeUnique<std::thread []>(totalSubdivs);
 	if (!subpixels || !subchunkThreads)
 		abort();
@@ -87,15 +89,21 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 		}
 	}
 
-	double iteration{0.0};
+	fixedVector_t<rgb8_t> points{totalSubdivs};
+	if (!points.valid())
+		throw std::bad_alloc{};
 	for (uint32_t y{0}; y < size.height(); ++y)
 	{
 		for (uint32_t x{0}; x < size.width(); ++x)
 		{
 			for (uint32_t i{0}; i < totalSubdivs; ++i)
+				//points[i] = subpixels[i].readNext();
+				subpixels[i].read(points[i]);
+			if (!write(stream, shadePixel(points)))
 			{
-				subpixels[i].read(iteration);
-				write(stream, iteration);
+				printf("Aborting at %u, %u - %s\n", x, y, strerror(errno));
+				fflush(stdout);
+				abort();
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 #include <array>
 #include <math.h>
+#include <string.h>
 #include "mandelbrot.hxx"
 #include "shade.hxx"
 
@@ -42,7 +43,7 @@ rgb8_t colourFor(const double x) noexcept
 	return linearEase(colour1, colour2, frac).toRGB8();
 }
 
-inline rgb8_t shade(const double i) noexcept
+rgb8_t shade(const double i) noexcept
 {
 	if (i >= maxIterations)
 		return {};
@@ -56,7 +57,16 @@ inline size_t xy(const area_t point, const area_t &size) noexcept
 	return y + x;
 }
 
-void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
+rgb8_t shadePixel(const fixedVector_t<rgb8_t> &points) noexcept
+{
+	floatRGB_t colour{};
+	for (const auto &pixel : points)
+		colour += pixel;
+	colour /= points.count();
+	return colour.toRGB8();
+}
+
+void shadeChunk(const area_t size, const area_t subchunk, const uint32_t /*subdiv*/,
 	stream_t &stream, const uint32_t affinityOffset) noexcept
 {
 	area_t offset;
@@ -72,20 +82,12 @@ void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
 	{
 		for (uint32_t x{0}; x < subchunk.width(); ++x)
 		{
-			rgb16_t colour;
-			for (size_t i{0}; i < subdiv; ++i)
+			if (!read(stream, image[xy(area_t{x, y} + offset, size)]))
 			{
-				double point = 0.0;
-				read(stream, point);
-				if (i == 0)
-					colour = shade(point);
-				else
-				{
-					colour += shade(point);
-					colour /= 2;
-				}
+				printf("Aborting at %u, %u - %s\n", x, y, strerror(errno));
+				fflush(stdout);
+				abort();
 			}
-			image[xy(area_t{x, y} + offset, size)] = colour;
 		}
 		++imageStatus[y + offset.height()];
 		if (imageStatus[y + offset.height()] == xTiles)
