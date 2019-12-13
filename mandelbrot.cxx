@@ -1,5 +1,6 @@
 #include <fenv.h>
 #include <thread>
+#include <string.h>
 #include "mandelbrot.hxx"
 #include "shade.hxx"
 #include "pngWriter.hxx"
@@ -8,11 +9,7 @@
 #include "ringBuffer.hxx"
 #include "conversions.hxx"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wliteral-suffix"
-using std::operator ""s;
-using std::operator ""us;
-#pragma GCC diagnostic pop
+using namespace std::literals::chrono_literals;
 
 const static arg_t args[] =
 {

@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <utility>
 #include <string>
+#include <vector>
 #include "memory.hxx"
 
 inline bool isComma(const char x) noexcept
