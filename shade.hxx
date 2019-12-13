@@ -79,10 +79,24 @@ public:
 	floatRGB_t operator -(const floatRGB_t &pixel) const noexcept
 		{ return {_r - pixel._r, _g - pixel._g, _b - pixel._b}; }
 
+	void operator +=(const floatRGB_t &pixel) noexcept
+	{
+		_r += pixel.r();
+		_g += pixel.g();
+		_b += pixel.b();
+	}
+
 	floatRGB_t operator *(const double scalar) const noexcept
 		{ return {_r * scalar, _g * scalar, _b * scalar}; }
 	floatRGB_t operator /(const double scalar) const noexcept
 		{ return {_r / scalar, _g / scalar, _b / scalar}; }
+
+	void operator /=(const uint32_t scalar) noexcept
+	{
+		_r /= scalar;
+		_g /= scalar;
+		_b /= scalar;
+	}
 
 	double r() const noexcept { return _r; }
 	double g() const noexcept { return _g; }
@@ -101,6 +115,8 @@ extern std::mutex imageMutex;
 extern std::condition_variable imageSync;
 extern uint32_t xTiles;
 
+rgb8_t shade(const double i) noexcept;
+rgb8_t shadePixel(const fixedVector_t<rgb8_t> &points) noexcept;
 void shadeChunk(const area_t size, const area_t subchunk, const uint32_t subdiv,
 	stream_t &stream, const uint32_t affinityOffset) noexcept;
 

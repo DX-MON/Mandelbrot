@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <utility>
 #include <vector>
-#include <stream.hxx>
+#include "stream.hxx"
+#include "fixedVector.hxx"
 
 struct area_t final
 {
