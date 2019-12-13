@@ -164,6 +164,7 @@ void masterAffinity() noexcept
 		abort();
 
 	threadAffinity(0);
+	availableProcessors.erase(availableProcessors.begin());
 }
 
 int main(int argc, char **argv) noexcept

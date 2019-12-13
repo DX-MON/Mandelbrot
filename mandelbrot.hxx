@@ -97,7 +97,7 @@ inline void threadAffinity(const uint32_t affinityOffset) noexcept
 {
 	cpu_set_t affinity = {};
 	CPU_ZERO(&affinity);
-	CPU_SET(affinityOffset % availableProcessors.size(), &affinity);
+	CPU_SET(availableProcessors[affinityOffset % availableProcessors.size()], &affinity);
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &affinity);
 }
 
