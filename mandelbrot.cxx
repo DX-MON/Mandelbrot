@@ -33,13 +33,15 @@ point2_t region;
 bool multiProcess;
 std::vector<uint32_t> availableProcessors;
 
-void writeImage(std::unique_lock<std::mutex> &lock) noexcept
+void writeImage(std::unique_lock<std::mutex> &&lock_) noexcept
 {
+	auto lock{std::move(lock_)};
 	for (uint32_t i{0}; i < height; ++i)
 	{
 		while (imageStatus[i] < xTiles)
-			imageSync.wait_for(lock, 10us);
+			imageSync.wait_for(lock, 50us);
 		writePNGRow(i, width);
+		fflush(stdout);
 	}
 }
 
@@ -79,11 +81,12 @@ int server(socketStream_t &socket) noexcept
 
 		shaderThreads[tile] = std::thread([=](socketStream_t stream, const uint32_t affinityOffset) noexcept
 			{ shadeChunk(size, subchunk, subdiv * subdiv, stream, affinityOffset); },
-			std::move(stream), i
+			std::move(stream), tile
 		);
 	}
 
-	writeImage(lock);
+	fflush(stdout);
+	writeImage(std::move(lock));
 	puts("Reaping shaders");
 	for (uint32_t i{1}; i < compNodes; ++i)
 		shaderThreads[i - 1].join();
@@ -230,7 +233,7 @@ int main(int argc, char **argv) noexcept
 			std::ref(stream)
 		);
 
-		writeImage(lock);
+		writeImage(std::move(lock));
 		computeThread.join();
 		shaderThread.join();
 		closePNG();
