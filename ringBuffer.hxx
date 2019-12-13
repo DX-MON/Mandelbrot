@@ -90,7 +90,14 @@ public:
 	bool read(void *const value, const size_t valueLen, size_t &actualLen) final override
 	{
 		wait([&]() noexcept { return count >= valueLen; });
-		memcpy(value, &buffer[readIndex], valueLen);
+		if (readIndex + valueLen > maxEntries)
+		{
+			const size_t offset = maxEntries - readIndex;
+			memcpy(value, &buffer[readIndex], offset);
+			memcpy(static_cast<char *>(value) + offset, buffer.get(), valueLen - offset);
+		}
+		else
+			memcpy(value, &buffer[readIndex], valueLen);
 		readIndex += valueLen;
 		readIndex %= maxEntries;
 		count -= valueLen;
@@ -102,7 +109,14 @@ public:
 	bool write(const void *const value, const size_t valueLen) final override
 	{
 		wait([&]() noexcept { return count < (maxEntries - valueLen); });
-		memcpy(&buffer[writeIndex], value, valueLen);
+		if (writeIndex + valueLen > maxEntries)
+		{
+			const size_t offset = maxEntries - writeIndex;
+			memcpy(&buffer[writeIndex], value, offset);
+			memcpy(buffer.get(), static_cast<const char *>(value) + offset, valueLen - offset);
+		}
+		else
+			memcpy(&buffer[writeIndex], value, valueLen);
 		writeIndex += valueLen;
 		writeIndex %= maxEntries;
 		count += valueLen;
