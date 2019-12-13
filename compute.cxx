@@ -6,7 +6,7 @@
 #include <thread>
 #include "mandelbrot.hxx"
 #include "shade.hxx"
-#include "ringBuffer.hxx"
+#include "memBuffer.hxx"
 #include "memory.hxx"
 
 constexpr double power(double base, uint32_t exp) noexcept
@@ -14,7 +14,6 @@ constexpr double power(double base, uint32_t exp) noexcept
 
 constexpr static const double bailout = power(power(2, 8), 2);
 static const double log_2 = log(2);
-uint32_t ringSize = 4_kB;
 
 double computePoint(const point2_t p0) noexcept
 {
@@ -43,7 +42,7 @@ double computePoint(const point2_t p0) noexcept
 }
 
 void computeSubchunk(const area_t &size, const area_t &offset, const point2_t &scale,
-	const point2_t &origin, ringBuffer_t<rgb8_t> &buffer) noexcept
+	const point2_t &origin, memBuffer_t<rgb8_t> &buffer) noexcept
 {
 	puts("Subpixel worker launched");
 	const uint32_t maxY = height - 1;
@@ -67,8 +66,8 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 	const point2_t subpixelOrigin = -(point2_t{double(subdiv / 2), double(subdiv / 2)} / subdiv) / scale;
 	const point2_t subpixelOffset = (point2_t{1, 1} / subdiv) / scale;
 	const uint32_t totalSubdivs = subdiv * subdiv;
-	ringSize = pageRound(size.width() * std::min<uint32_t>(size.height(), 256) * sizeof(double));
-	auto subpixels = makeUnique<ringBuffer_t<rgb8_t> []>(totalSubdivs);
+	memBuffer_t<rgb8_t>::length = width * height;
+	auto subpixels = makeUnique<memBuffer_t<rgb8_t> []>(totalSubdivs);
 	auto subchunkThreads = makeUnique<std::thread []>(totalSubdivs);
 	if (!subpixels || !subchunkThreads)
 		abort();
@@ -82,7 +81,7 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 			const uint32_t index = x + (y * subdiv);
 			subchunkThreads[index] = std::thread([&](const point2_t origin, const uint32_t index) noexcept
 				{
-					threadAffinity(index + 1);
+					threadAffinity(index);
 					computeSubchunk(size, offset, scale, origin, subpixels[index]);
 				}, origin + subchunkOffset, index
 			);
@@ -97,8 +96,7 @@ void computeChunk(const area_t size, const area_t offset, const point2_t scale,
 		for (uint32_t x{0}; x < size.width(); ++x)
 		{
 			for (uint32_t i{0}; i < totalSubdivs; ++i)
-				//points[i] = subpixels[i].readNext();
-				subpixels[i].read(points[i]);
+				points[i] = subpixels[i].readNext();
 			if (!write(stream, shadePixel(points)))
 			{
 				printf("Aborting at %u, %u - %s\n", x, y, strerror(errno));
