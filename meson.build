@@ -9,7 +9,7 @@ project(
 )
 
 compiler = meson.get_compiler('cpp')
-if compiler.get_id() == 'gcc' and compiler.version() <= '5.0.0'
+if compiler.get_id() == 'gcc' and compiler.version().version_compare('<=5.0.0')
 	error('Must use GCC 5.0.0 or newer')
 endif
 
